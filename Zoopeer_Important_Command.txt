@@ -1,0 +1,129 @@
+
+This explaination from YouTube Video https://youtu.be/d05gHaNrDLk
+
+Zoopeer Important Command
+
+Download Link https://zookeeper.apache.org/releases.html 
+
+java --version
+Minimum recommended JDK version is now 1.8, for Zookeeper 3.7.0
+
+Start a Zookeeper Server:
+bin/zkServer.sh start conf/zoo_sample.cfg
+bin/zkServer.sh start-foreground conf/zoo_sample.cfg
+
+Get Status of Zookeeper Server
+bin/zkServer.sh status conf/zoo_sample.cfg
+Client port found: 2181. Client address: localhost. Client SSL: false.
+Mode: standalone
+
+To stop Zookeeper Server
+bin/zkServer.sh stop conf/zoo_sample.cfg
+
+To start Zookeeper Client: (Before Server start, you can also start client, it will wait for server to be up)
+bin/zkCli.sh -server localhost:2181
+
+Explore ZNode (Key Value Pair)
+> ls /
+1. ** Persistent znode **
+Syntax /path '<data>'  -- <Data> is opational, you create node without Data.
+create /mydata "Binod Suman"
+> ls /
+>get /mydata
+
+Update Node
+set /mydata 'Binod'
+get /mydata
+Binod
+
+Create child node:
+Syntax 
+create /parent/path/subnode/path '<data>'
+Syntax /path '<data>'
+create /mydata/first "Demo first"
+ls /mydata
+
+Get ChildNodeNumber 
+getAllChildrenNumber /mydata
+
+-R to show the child nodes recursely
+ls -R /mydata
+
+2. ** Create Ephemerals Znode **
+Syntax
+create -e /path '<data>'
+create -e /ephe "Ephemeral node"
+create -e /ephe2 "Ephemeral node 2"
+
+To show only Ephemerals node
+> getEphemerals
+
+Ephemerals inside the persistent node
+create -e /mydata/ephe3 "Ephemeral node 2"
+
+3. ** Sequential Persistent node **
+[zk: localhost:2181(CONNECTED) 19] create -s /seq 'First'
+Created /seq0000000004
+[zk: localhost:2181(CONNECTED) 20] create -s /seq 'Second'
+Created /seq0000000005
+
+4. ** Sequential Ephemeral node **
+create -s -e /seq 'Second'
+
+5. ** Time to Live TTL Znode [extendedTypesEnabled (in 3.5.4)]
+First add below line in zoo.cfg file
+extendedTypesEnabled=true
+
+Syntax
+create -t time_in_millisec /path '<data>'
+>create -t 4000 /test_ttl 'Binod Suman'
+>get /test_ttl
+Binod Suman
+>ls /
+[test_ttl, test_znode, zookeeper]
+After 4 seconds
+>get /test_ttl
+Node does not exist: /test_ttl
+
+Create TTL inside the Persistent znode
+>create /mydata 'Fist Persitent znode'
+>stat /mydata
+dataLength = 20
+numChildren = 0
+
+>create -t 5000 /mydata/ttl_test 'Fist Persit TTL znode'
+>get /mydata/ttl_test
+Fist Persit TTL znode
+>stat /mydata
+dataLength = 20
+numChildren = 1
+
+After 5 seconds
+>ls /mydata
+[]
+
+Check Status
+Syntax
+stat /path
+cversion = 5  -- How many times you changed this node
+dataVersion = 1
+aclVersion = 0
+ephemeralOwner = 0x0
+dataLength = 5 -- value length
+numChildren = 3 -- will change when create child inside
+
+
+Delete the Node
+Syntax
+delete /path  --Only when children is not there
+deleteall /path -- when child associated with node
+
+
+>history
+
+Quit the CLI windows.
+>quit
+
+Source: https://zookeeper.apache.org/doc/r3.6.0/zookeeperCLI.html 
+
+
