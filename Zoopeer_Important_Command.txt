@@ -1,5 +1,5 @@
 
-This explaination from YouTube Video https://youtu.be/d05gHaNrDLk
+This explaination from YouTube Video https://youtu.be/0icnoQh2mUM 
 
 Zoopeer Important Command
 
@@ -126,4 +126,14 @@ Quit the CLI windows.
 
 Source: https://zookeeper.apache.org/doc/r3.6.0/zookeeperCLI.html 
 
+
+cd /Users/binod/Documents/Binod/Redis_All/Java_workspace/Zookeeper_Play
+mvn clean install
+mvn exec:java -Dexec.mainClass=zookeeperDemo.Ephemeral_Node_Creation -Dexec.as="Youtube_Demo"
+
+
+#server.1=localhost:2666:3666
+#server.2=localhost:2667:3667
+#server.3=localhost:2668:3668
+extendedTypesEnabled=true
 
