@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,37 +15,32 @@ public class WorkerNode {
     static ZooKeeper zooKeeper;
     private static final Logger LOG = LoggerFactory.getLogger(WorkerNode.class);
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
-    private static final String ROOT_ZNODE = "/dbprocessing";
-
-    private static final int NUMBER_OF_TASK = 1000;
+    private static final String ROOT_ZNODE = "/db";
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
-
-        // In Actual System, this should be IP address of Worker node.
+       // In Actual System, this should be IP address of Worker node.
         String machine_id = UUID.randomUUID().toString();
 
         Watcher watcher = new Watcher() {
             @Override
             public void process(WatchedEvent watchedEvent) {
-                LOG.info("*********************************************");
-                if(watchedEvent.getType() == Event.EventType.NodeChildrenChanged){
+                 if((watchedEvent.getType() == Event.EventType.NodeChildrenChanged) ||
+                   (watchedEvent.getType() == Event.EventType.NodeDataChanged)) {
                     try {
                         distributeWork(machine_id, ROOT_ZNODE);
                     } catch (KeeperException e) {
                         throw new RuntimeException(e);
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException | UnsupportedEncodingException e) {
                         throw new RuntimeException(e);
                     }
                 }
-
-                
-            }
+          }
         };
 
-        zooKeeper = new ZooKeeper(ZOOKEEPER_ADDRESS, 20000, watcher);
+        zooKeeper = new ZooKeeper(ZOOKEEPER_ADDRESS, 1000, watcher);
 
-        if(zooKeeper.exists(ROOT_ZNODE, false) ==  null){
-            zooKeeper.create(ROOT_ZNODE, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        if(zooKeeper.exists(ROOT_ZNODE,null) ==  null){
+            zooKeeper.create(ROOT_ZNODE, "1000".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
         LOG.info("This Machine id  = "+ machine_id);
@@ -54,27 +50,23 @@ public class WorkerNode {
         Thread.sleep(100_000_000);
     }
 
-    private static void distributeWork(String machine_id, String rootNode) throws KeeperException, InterruptedException {
-        //LOG.info("I am : worker-"+machine_id);
-        List<String> children = zooKeeper.getChildren(rootNode, false);
-        children.sort(String::compareTo);
-        byte[] data = zooKeeper.getData(rootNode+ "/"+children.get(0), false, null);
-        //LOG.info("Data : "+data);
+    private static void distributeWork(String machine_id, String rootNode) throws KeeperException, InterruptedException, UnsupportedEncodingException {
+        List<String> children = zooKeeper.getChildren(rootNode, true);
+        byte[] dataByte = zooKeeper.getData(rootNode,true,null);
+        String data = new String(dataByte,"UTF-8");
+
+        int number_of_task = Integer.parseInt(data.toString());
+        System.out.println("Number of task in configuration : "+number_of_task);
         int n = children.size();
         LOG.info("Number of worker connected :"+n);
-        int portion = NUMBER_OF_TASK/n;
+        int portion = number_of_task/n;
         int startFrom = 0;
         for(String child : children){
-            //LOG.info("Child : "+child);
             if(child.startsWith("worker-"+machine_id)){
-                LOG.info(" your range : "+startFrom +" To "+ (startFrom+portion));
+                LOG.info(" your range now now : "+startFrom +" To "+ (startFrom+portion));
             }
-            startFrom+=portion+1;
+            startFrom = startFrom + portion+1;
         }
 
-        if(data!=null && new String(data).equalsIgnoreCase(machine_id)){
-
-        }
-       zooKeeper.getChildren(rootNode, true);
     }
 }
