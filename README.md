@@ -1,4 +1,4 @@
-# zookeeper
+# Zookeeper and Apache Kafka
 All basic and system design code using Zookeeper, included:
 Added basic about Zookeeper
 Command for Zookeeper server start and stop
